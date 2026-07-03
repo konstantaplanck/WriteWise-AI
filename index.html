@@ -4,22 +4,46 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WriteWise AI</title>
-    <!-- Tailwind CSS untuk styling -->
+    <!-- 1. Ambil Tailwind CSS untuk tampilan -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- 2. Ambil React & ReactDOM -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <!-- 3. Ambil Babel agar browser bisa mencairkan kode TSX/JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   </head>
   <body class="bg-slate-50 flex items-center justify-center min-h-screen">
     <div id="root"></div>
 
-    <script type="module">
-      import React from "https://esm.sh/react@18.2.0";
-      import ReactDOM from "https://esm.sh/react-dom@18.2.0/client";
-      
-      // PENTING: Ganti "remixed-dceee193.tsx.txt" di bawah sesuai dengan 
-      // nama file kodingan asli yang kamu upload di GitHub kamu
-      import App from "./remixed-dceee193.tsx.txt"; 
+    <!-- Kita render kodenya menggunakan text/babel -->
+    <script type="text/babel" data-type="module">
+      // Ambil icon Lucide biar tidak error karena di kodinganmu ada import Lucide
+      import * as Lucide from "https://esm.sh/lucide-react@0.344.0";
+      window.Lucide = Lucide;
 
-      const root = ReactDOM.createRoot(document.getElementById("root"));
-      root.render(React.createElement(App));
+      // Fungsi untuk menarik isi file aslimu secara gaib
+      async function launchApp() {
+        try {
+          const response = await fetch("./remixed-dceee193.tsx.txt");
+          let code = await response.text();
+          
+          // Bersihkan baris import bawaan agar tidak bikin browser bingung
+          code = code.replace(/import\s+[\s\S]*?from\s+['"].*?['"];?/g, "");
+          // Bersihkan export default di akhir kode
+          code = code.replace(/export\s+default\s+/g, "");
+
+          // Jalankan kodenya di dalam panggung React
+          const Intermediary = new Function("React", "useState", "useRef", ...Object.keys(Lucide), `${code}; return App;`);
+          const AppKomponen = Intermediary(React, React.useState, React.useRef, ...Object.values(Lucide));
+
+          const root = ReactDOM.createRoot(document.getElementById("root"));
+          root.render(React.createElement(AppKomponen));
+        } catch (err) {
+          console.error("Gagal mencairkan kode:", err);
+        }
+      }
+
+      launchApp();
     </script>
   </body>
 </html>
